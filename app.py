@@ -19,6 +19,7 @@ from utils.text_to_speech import generate_speech
 # Load environment variables
 load_dotenv()
 
+
 app = Flask(__name__)
 
 # In-memory storage for script versions
