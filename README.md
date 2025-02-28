@@ -55,6 +55,7 @@ VidioFlow is a powerful web application for creating video scripts and optimizin
 
 ## Directory Structure
 
+
 ```
 VidioFlow/
 ├── app.py                  # Flask application
