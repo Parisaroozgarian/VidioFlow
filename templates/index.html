@@ -1,0 +1,1138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidioFlow - Video Script Generator</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #e0e0e0;
+            font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .navbar {
+            background-color: #333333;
+        }
+        
+        .navbar-brand {
+            font-weight: bold;
+            color:rgb(89, 164, 183) !important;
+        }
+        
+        .card { 
+            background-color: #242424;
+            border-radius: 12px;
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            margin-bottom: 20px;
+            border: 1px solid #333333;
+        }
+        
+        .btn-primary {
+            background-color: rgb(89, 164, 183);
+            border-color: rgb(89, 164, 183);
+            transition: all 0.3s ease;
+        }
+        
+        .btn-primary:hover {
+            background-color:rgb(89, 164, 183);
+            border-color:rgb(89, 164, 183);
+        }
+        
+        .form-control, .form-select {
+            background-color: #333333;
+            border-color: #404040;
+            color: #e0e0e0;
+        }
+        
+        .form-control:focus, .form-select:focus {
+            background-color: #333333;
+            border-color:rgb(89, 164, 183);
+            box-shadow: 0 0 0 0.25rem rgb(89, 164, 183);
+            color: #e0e0e0;
+        }
+        
+        .card-header {
+            background-color: #2a2a2a !important;
+            border-bottom: 1px solid #333333;
+        }
+        
+        #scriptOutput, #seoOutput {
+            background-color: #333333;
+            color: #e0e0e0;
+            border: 1px solid #404040;
+        }
+        
+        .loader {
+            border: 5px solid #333333;
+            border-top: 5px solid rgb(89, 164, 183);
+        }
+        
+        .badge {
+            background-color: #333333;
+            color: #e0e0e0;
+        }
+        
+        .tool-section {
+            background-color: #242424;
+            border: 1px solid #333333;
+        }
+        
+        .nav-pills .nav-link.active {
+            background-color:rgb(89, 164, 183);
+        }
+        
+        .nav-pills .nav-link {
+            color: #e0e0e0;
+        }
+        
+        .script-toolbar {
+            background-color: #2a2a2a;
+        }
+        
+        .btn-outline-primary {
+            color:rgb(89, 164, 183);
+            border-color:rgb(89, 164, 183);
+        }
+        
+        .btn-outline-primary:hover {
+            background-color: rgb(89, 164, 183);
+            border-color: rgb(89, 164, 183);
+            color: #ffffff;
+        }
+        
+        .btn-outline-secondary {
+            color: #e0e0e0;
+            border-color: #666666;
+        }
+        
+        .btn-outline-secondary:hover {
+            background-color: #666666;
+            border-color: #666666;
+            color: #ffffff;
+        }
+        
+        .version-card {
+            background-color: #242424;
+            border: 1px solid #333333;
+        }
+        
+        .version-card:hover {
+            background-color: #2a2a2a;
+        }
+        
+        .analytics-card {
+            border-left: 4px solid #43853d;
+        }
+        
+        footer {
+            background-color: #242424 !important;
+            color: #e0e0e0;
+        }
+        
+        .dropdown-menu {
+            background-color: #242424;
+            border: 1px solid #333333;
+        }
+        
+        .dropdown-item {
+            color: #e0e0e0;
+        }
+        
+        .dropdown-item:hover {
+            background-color: #333333;
+            color: #ffffff;
+        }
+        
+        .text-muted {
+            color: #999999 !important;
+        }
+        
+        /* Form element placeholder color */
+        ::placeholder {
+            color: #888888 !important;
+            opacity: 1;
+        }
+        
+        /* Option color in select dropdowns */
+        option {
+            background-color: #333333;
+            color: #e0e0e0;
+        }
+        
+        .tab-content {
+            padding: 20px 0;
+        }
+        
+        #scriptOutput, #seoOutput {
+            white-space: pre-line;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 200px;
+        }
+        
+        .thumbnail-card {
+            border: 1px solid #e9ecef;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            background-color: #ffffff;
+        }
+        
+        .thumbnail-card h5 {
+            border-bottom: 1px solid #e9ecef;
+            padding-bottom: 8px;
+            margin-bottom: 8px;
+        }
+        
+        .broll-item {
+            border-left: 3px solid rgb(58, 131, 149);
+            padding-left: 12px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">VidioFlow</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link" href="#scriptGenerator" data-bs-toggle="tab">Script Generator</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#seoOptimizer" data-bs-toggle="tab">SEO Optimizer</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container my-4">
+        <div class="tab-content">
+            <!-- Script Generator Tab -->
+            <div class="tab-pane fade" id="scriptGenerator">
+                <div class="row">
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h2 class="card-title mb-0">Generate Video Script</h2>
+                            </div>
+                            <div class="card-body">
+                                <form id="scriptForm">
+                                    <div class="mb-3">
+                                        <label for="topic" class="form-label">Video Topic</label>
+                                        <input type="text" class="form-control" id="topic" placeholder="e.g., Benefits of Regular Exercise" required>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="templateId" class="form-label">Script Template</label>
+                                        <select class="form-select" id="templateId">
+                                            <option value="">General (No specific template)</option>
+                                            <!-- Templates will be loaded dynamically -->
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="duration" class="form-label">Duration (minutes)</label>
+                                        <select class="form-select" id="duration">
+                                            <option value="1">1 minute</option>
+                                            <option value="3" selected>3 minutes</option>
+                                            <option value="5">5 minutes</option>
+                                            <option value="10">10 minutes</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="tone" class="form-label">Tone</label>
+                                        <select class="form-select" id="tone">
+                                            <option value="informative" selected>Informative</option>
+                                            <option value="entertaining">Entertaining</option>
+                                            <option value="professional">Professional</option>
+                                            <option value="casual">Casual</option>
+                                            <option value="inspirational">Inspirational</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="targetAudience" class="form-label">Target Audience</label>
+                                        <select class="form-select" id="targetAudience">
+                                            <option value="general" selected>General</option>
+                                            <option value="beginners">Beginners</option>
+                                            <option value="experts">Experts</option>
+                                            <option value="children">Children</option>
+                                            <option value="professionals">Professionals</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3">
+                                        <label for="language" class="form-label">Language</label>
+                                        <select class="form-select" id="language">
+                                            <option value="english" selected>English</option>
+                                            <option value="spanish">Spanish</option>
+                                            <option value="french">French</option>
+                                            <option value="german">German</option>
+                                            <option value="italian">Italian</option>
+                                            <option value="portuguese">Portuguese</option>
+                                            <option value="japanese">Japanese</option>
+                                            <option value="chinese">Chinese</option>
+                                        </select>
+                                    </div>
+                                    
+                                    <div class="mb-3 form-check">
+                                        <input type="checkbox" class="form-check-input" id="optimizeForSEO">
+                                        <label class="form-check-label" for="optimizeForSEO">Optimize for SEO</label>
+                                    </div>
+                                    
+                                    <div class="mb-3" id="keywordsContainer" style="display: none;">
+                                        <label for="keywords" class="form-label">Keywords (comma-separated)</label>
+                                        <input type="text" class="form-control" id="keywords" placeholder="e.g., exercise, fitness, health, workout">
+                                    </div>
+                                    
+                                    <button type="submit" class="btn btn-primary w-100">Generate Script</button>
+                                </form>
+                            </div>
+                        </div>
+                        
+                        <!-- Script Versions Panel -->
+                        <div class="card mb-4" id="versionsPanel" style="display: none;">
+                            <div class="card-header bg-white">
+                                <h3 class="card-title mb-0">Script Versions</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="versionsLoader" class="loader"></div>
+                                <div id="versionsList"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-8">
+                        <!-- Script Output -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h3 class="card-title mb-0">Generated Script</h3>
+                                <div class="btn-group">
+                                    <button id="copyScript" class="btn btn-sm btn-outline-primary" disabled><i class="bi bi-clipboard"></i> Copy</button>
+                                    <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" id="exportDropdown" data-bs-toggle="dropdown" aria-expanded="false" disabled>
+                                        <i class="bi bi-download"></i> Export
+                                    </button>
+                                    <ul class="dropdown-menu" aria-labelledby="exportDropdown">
+                                        <li><a class="dropdown-item" href="#" id="exportPDF">As PDF</a></li>
+                                        <li><a class="dropdown-item" href="#" id="exportDOCX">As Word Document</a></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="script-toolbar" id="scriptTools" style="display: none;">
+                                <button class="btn btn-sm btn-outline-secondary" id="analyzeScript"><i class="bi bi-bar-chart"></i> Analyze</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="generateBRoll"><i class="bi bi-camera-video"></i> B-Roll Ideas</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="generateThumbnails"><i class="bi bi-image"></i> Thumbnails</button>
+                                <button class="btn btn-sm btn-outline-secondary" id="generateVoiceover"><i class="bi bi-mic"></i> Voice Preview</button>
+                            </div>
+                            <div class="card-body">
+                                <div id="scriptLoader" class="loader"></div>
+                                <div id="scriptOutput" class="mt-2">Your generated script will appear here.</div>
+                                
+                                <!-- Audio Player (hidden by default) -->
+                                <div id="audioPlayerContainer" style="display: none;" class="mt-3 p-3 bg-light rounded">
+                                    <h5><i class="bi bi-headphones"></i> Voice Preview</h5>
+                                    <div class="d-flex align-items-center mb-2">
+                                        <label for="voiceSelect" class="me-2">Voice:</label>
+                                        <select id="voiceSelect" class="form-select form-select-sm" style="width: auto;">
+                                            <option value="alloy">Alloy (Neutral)</option>
+                                            <option value="echo">Echo (Male)</option>
+                                            <option value="fable">Fable (Female)</option>
+                                            <option value="onyx">Onyx (Deep Male)</option>
+                                            <option value="nova">Nova (Female)</option>
+                                            <option value="shimmer">Shimmer (Young Female)</option>
+                                        </select>
+                                    </div>
+                                    <audio id="audioPlayer" controls></audio>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Extra Panels (Hidden by default) -->
+                        <div id="extraPanels">
+                            <!-- Analytics Panel -->
+                            <div class="card mb-4" id="analyticsPanel" style="display: none;">
+                                <div class="card-header bg-white">
+                                    <h3 class="card-title mb-0">Script Analytics</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="analyticsLoader" class="loader"></div>
+                                    <div id="analyticsContent" class="row">
+                                        <!-- Content will be added dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- B-Roll Suggestions Panel -->
+                            <div class="card mb-4" id="brollPanel" style="display: none;">
+                                <div class="card-header bg-white">
+                                    <h3 class="card-title mb-0">B-Roll Suggestions</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="brollLoader" class="loader"></div>
+                                    <div id="brollSuggestions">
+                                        <!-- Content will be added dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Thumbnail Suggestions Panel -->
+                            <div class="card mb-4" id="thumbnailPanel" style="display: none;">
+                                <div class="card-header bg-white">
+                                    <h3 class="card-title mb-0">Thumbnail Ideas</h3>
+                                </div>
+                                <div class="card-body">
+                                    <div id="thumbnailLoader" class="loader"></div>
+                                    <div id="thumbnailSuggestions" class="row">
+                                        <!-- Content will be added dynamically -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- SEO Optimizer Tab -->
+            <div class="tab-pane fade" id="seoOptimizer">
+                <div class="row">
+                    <div class="col-md-5">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white">
+                                <h2 class="card-title mb-0">SEO Content Optimizer</h2>
+                            </div>
+                            <div class="card-body">
+                                <form id="seoForm">
+                                    <div class="mb-3">
+                                        <label for="content" class="form-label">Content to Optimize</label>
+                                        <textarea class="form-control" id="content" rows="10" placeholder="Paste your content here" required></textarea>
+                                    </div>
+                                    <div class="mb-3">
+                                        <label for="seoKeywords" class="form-label">Target Keywords (comma-separated)</label>
+                                        <input type="text" class="form-control" id="seoKeywords" placeholder="e.g., meditation, mindfulness, stress relief">
+                                    </div>
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary">Optimize Content</button>
+                                        <button type="button" id="analyzeSEO" class="btn btn-outline-primary">Analyze SEO Score</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="col-md-7">
+                        <div class="card mb-4">
+                            <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                                <h3 class="card-title mb-0">Optimized Content</h3>
+                                <button id="copySEO" class="btn btn-sm btn-outline-primary" disabled><i class="bi bi-clipboard"></i> Copy</button>
+                            </div>
+                            <div class="card-body">
+                                <div id="seoLoader" class="loader"></div>
+                                <div id="seoOutput" class="mt-2">Your optimized content will appear here.</div>
+                            </div>
+                        </div>
+                        
+                        <!-- SEO Analysis Panel -->
+                        <div class="card" id="seoAnalysisPanel" style="display: none;">
+                            <div class="card-header bg-white">
+                                <h3 class="card-title mb-0">SEO Analysis</h3>
+                            </div>
+                            <div class="card-body">
+                                <div id="seoAnalysisLoader" class="loader"></div>
+                                <div id="seoAnalysisContent">
+                                    <!-- Content will be added dynamically -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="py-4 mt-4">
+        <div class="container text-center">
+            <p>© 2025 VidioFlow - Video Script Generator & SEO Optimizer</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Show Script Generator tab by default
+            const defaultTab = document.querySelector('a[href="#scriptGenerator"]');
+            const scriptGeneratorPane = document.querySelector('#scriptGenerator');
+            
+            defaultTab.classList.add('active');
+            scriptGeneratorPane.classList.add('show', 'active');
+            
+            // Handle tab switching
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    
+                    // Remove active class from all tabs and panes
+                    document.querySelectorAll('.nav-link').forEach(tab => tab.classList.remove('active'));
+                    document.querySelectorAll('.tab-pane').forEach(pane => {
+                        pane.classList.remove('show', 'active');
+                    });
+                    
+                    // Add active class to clicked tab and its corresponding pane
+                    this.classList.add('active');
+                    const targetPane = document.querySelector(this.getAttribute('href'));
+                    targetPane.classList.add('show', 'active');
+                });
+            });
+            
+            // Load script templates
+            fetch('/api/templates')
+                .then(response => response.json())
+                .then(templates => {
+                    const templateSelect = document.getElementById('templateId');
+                    
+                    for (const [id, name] of Object.entries(templates)) {
+                        const option = document.createElement('option');
+                        option.value = id;
+                        option.textContent = name;
+                        templateSelect.appendChild(option);
+                    }
+                })
+                .catch(error => console.error('Error loading templates:', error));
+            
+            // Toggle keywords input based on SEO checkbox
+            document.getElementById('optimizeForSEO').addEventListener('change', function() {
+                document.getElementById('keywordsContainer').style.display = this.checked ? 'block' : 'none';
+            });
+
+            // Current script ID and topic for versioning
+            let currentScriptId = null;
+            let currentTopic = '';
+            let currentScript = '';
+            
+            // Script Generator Form Submission
+            document.getElementById('scriptForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loader
+                document.getElementById('scriptLoader').style.display = 'block';
+                document.getElementById('scriptOutput').textContent = 'Generating your script...';
+                document.getElementById('copyScript').disabled = true;
+                document.getElementById('exportDropdown').disabled = true;
+                document.getElementById('scriptTools').style.display = 'none';
+                
+                // Hide any open panels
+                document.getElementById('analyticsPanel').style.display = 'none';
+                document.getElementById('brollPanel').style.display = 'none';
+                document.getElementById('thumbnailPanel').style.display = 'none';
+                document.getElementById('audioPlayerContainer').style.display = 'none';
+                
+                // Get form values
+                currentTopic = document.getElementById('topic').value;
+                const duration = document.getElementById('duration').value;
+                const tone = document.getElementById('tone').value;
+                const targetAudience = document.getElementById('targetAudience').value;
+                const templateId = document.getElementById('templateId').value;
+                const language = document.getElementById('language').value;
+                const optimizeForSEO = document.getElementById('optimizeForSEO').checked;
+                const keywords = document.getElementById('keywords').value;
+                
+                // Prepare request data
+                const requestData = {
+                    topic: currentTopic,
+                    duration: parseInt(duration),
+                    tone: tone,
+                    targetAudience: targetAudience,
+                    templateId: templateId || null,
+                    language: language,
+                    optimizeForSEO: optimizeForSEO,
+                    keywords: keywords
+                };
+                
+                // Send POST request to backend
+                fetch('/generate-script', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loader
+                    document.getElementById('scriptLoader').style.display = 'none';
+                    
+                    // Display the result
+                    if (data.script) {
+                        document.getElementById('scriptOutput').textContent = data.script;
+                        document.getElementById('copyScript').disabled = false;
+                        document.getElementById('exportDropdown').disabled = false;
+                        document.getElementById('scriptTools').style.display = 'flex';
+                        
+                        // Save current script and ID
+                        currentScript = data.script;
+                        currentScriptId = data.script_id;
+                        
+                        // Load script versions
+                        loadScriptVersions(currentTopic);
+                    } else if (data.error) {
+                        document.getElementById('scriptOutput').textContent = 'Error: ' + data.error;
+                    }
+                })
+                .catch(error => {
+                    // Hide loader
+                    document.getElementById('scriptLoader').style.display = 'none';
+                    document.getElementById('scriptOutput').textContent = 'Error: ' + error.message;
+                });
+            });
+            
+            // Load script versions
+            function loadScriptVersions(topic) {
+                if (!topic) return;
+                
+                // Show versions panel and loader
+                document.getElementById('versionsPanel').style.display = 'block';
+                document.getElementById('versionsLoader').style.display = 'block';
+                document.getElementById('versionsList').innerHTML = '';
+                
+                fetch(`/script-versions?topic=${encodeURIComponent(topic)}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        document.getElementById('versionsLoader').style.display = 'none';
+                        
+                        if (data.versions && data.versions.length > 0) {
+                            const versionsHTML = data.versions.map((version, index) => {
+                                const date = new Date(version.timestamp);
+                                const formattedDate = date.toLocaleDateString() + ' ' + date.toLocaleTimeString();
+                                
+                                return `
+                                <div class="card version-card mb-2" data-id="${version.id}">
+                                    <div class="card-body p-2">
+                                        <h6 class="card-title mb-1">Version ${index + 1}</h6>
+                                        <div class="small text-muted mb-1">${formattedDate}</div>
+                                        <div class="d-flex gap-1 flex-wrap">
+                                            <span class="badge bg-secondary">${version.parameters.tone}</span>
+                                            <span class="badge bg-secondary">${version.parameters.language}</span>
+                                            <span class="badge bg-secondary">${version.parameters.duration}min</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                `;
+                            }).join('');
+                            
+                            document.getElementById('versionsList').innerHTML = versionsHTML;
+                            
+                            // Add click event listeners to version cards
+                            document.querySelectorAll('.version-card').forEach(card => {
+                                card.addEventListener('click', function() {
+                                    const versionId = this.dataset.id;
+                                    loadScriptVersion(versionId);
+                                });
+                            });
+                        } else {
+                            document.getElementById('versionsList').innerHTML = '<p class="text-muted">No previous versions found.</p>';
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('versionsLoader').style.display = 'none';
+                        document.getElementById('versionsList').innerHTML = '<p class="text-danger">Error loading versions: ' + error.message + '</p>';
+                    });
+            }
+            
+            // Load specific script version
+            function loadScriptVersion(versionId) {
+                fetch(`/script-version/${versionId}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.script) {
+                            document.getElementById('scriptOutput').textContent = data.script;
+                            document.getElementById('copyScript').disabled = false;
+                            document.getElementById('exportDropdown').disabled = false;
+                            document.getElementById('scriptTools').style.display = 'flex';
+                            
+                            // Update current script and ID
+                            currentScript = data.script;
+                            currentScriptId = data.id;
+                        } else if (data.error) {
+                            alert('Error: ' + data.error);
+                        }
+                    })
+                    .catch(error => {
+                        alert('Error loading version: ' + error.message);
+                    });
+            }
+            
+            // Analyze Script
+            document.getElementById('analyzeScript').addEventListener('click', function() {
+                if (!currentScript) return;
+                
+                // Show analytics panel and loader
+                document.getElementById('analyticsPanel').style.display = 'block';
+                document.getElementById('analyticsLoader').style.display = 'block';
+                document.getElementById('analyticsContent').innerHTML = '';
+                
+                // Hide other panels
+                document.getElementById('brollPanel').style.display = 'none';
+                document.getElementById('thumbnailPanel').style.display = 'none';
+                
+                // Send request to analyze script
+                fetch('/analyze-script', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ script: currentScript }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loader
+                    document.getElementById('analyticsLoader').style.display = 'none';
+                    
+                    // Create analytics cards
+                    let analyticsHTML = `
+                    <div class="col-md-6 mb-3">
+                        <div class="card analytics-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Readability</h5>
+                                <h2 class="display-4">${data.readability_score || 0}<small class="fs-6">/100</small></h2>
+                                <p class="text-muted">Complexity: ${data.complexity_level || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card analytics-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Content Length</h5>
+                                <h2 class="display-4">${data.word_count || 0}<small class="fs-6"> words</small></h2>
+                                <p class="text-muted">Estimated Duration: ${data.estimated_duration || 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card analytics-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Tone Analysis</h5>
+                                <p class="mb-1">${data.tone_analysis || 'Not available'}</p>
+                                <p class="text-muted">Pace: ${data.reading_pace || 'N/A'} words/min</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <div class="card analytics-card h-100">
+                            <div class="card-body">
+                                <h5 class="card-title">Key Strengths & Improvements</h5>
+                                <p class="mb-1"><strong>Strength:</strong> ${data.key_strength || 'Not available'}</p>
+                                <p class="mb-0"><strong>Improvement:</strong> ${data.top_suggestion || 'Not available'}</p>
+                            </div>
+                        </div>
+                    </div>
+                    `;
+                    
+                    document.getElementById('analyticsContent').innerHTML = analyticsHTML;
+                })
+                .catch(error => {
+                    document.getElementById('analyticsLoader').style.display = 'none';
+                    document.getElementById('analyticsContent').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                });
+            });
+            
+            // Generate B-Roll Suggestions
+            document.getElementById('generateBRoll').addEventListener('click', function() {
+                if (!currentScript) return;
+                
+                // Show B-Roll panel and loader
+                document.getElementById('brollPanel').style.display = 'block';
+                document.getElementById('brollLoader').style.display = 'block';
+                document.getElementById('brollSuggestions').innerHTML = '';
+                
+                // Hide other panels
+                document.getElementById('analyticsPanel').style.display = 'none';
+                document.getElementById('thumbnailPanel').style.display = 'none';
+                
+                // Send request to generate B-Roll suggestions
+                fetch('/generate-b-roll', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ script: currentScript }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loader
+                    document.getElementById('brollLoader').style.display = 'none';
+                    
+                    if (Array.isArray(data)) {
+                        // Create B-Roll suggestion items
+                        const suggestionsHTML = data.map(item => `
+                        <div class="broll-item">
+                            <h5 class="mb-1">${item.description}</h5>
+                            <p class="mb-1"><strong>Timing:</strong> ${item.timing}</p>
+                            <p class="mb-0"><strong>Purpose:</strong> ${item.purpose}</p>
+                        </div>
+                        `).join('');
+                        
+                        document.getElementById('brollSuggestions').innerHTML = suggestionsHTML;
+                    } else {
+                        document.getElementById('brollSuggestions').innerHTML = '<p class="text-muted">No B-Roll suggestions available.</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('brollLoader').style.display = 'none';
+                    document.getElementById('brollSuggestions').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                });
+            });
+            
+            // Generate Thumbnail Suggestions
+            document.getElementById('generateThumbnails').addEventListener('click', function() {
+                if (!currentScript || !currentTopic) return;
+                
+                // Show Thumbnail panel and loader
+                document.getElementById('thumbnailPanel').style.display = 'block';
+                document.getElementById('thumbnailLoader').style.display = 'block';
+                document.getElementById('thumbnailSuggestions').innerHTML = '';
+                
+                // Hide other panels
+                document.getElementById('analyticsPanel').style.display = 'none';
+                document.getElementById('brollPanel').style.display = 'none';
+                
+                // Send request to generate thumbnail suggestions
+                fetch('/generate-thumbnails', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        topic: currentTopic,
+                        script: currentScript
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loader
+                    document.getElementById('thumbnailLoader').style.display = 'none';
+                    
+                    if (data && Array.isArray(data)) {
+                        // Create thumbnail suggestion cards
+                        const thumbnailsHTML = data.map(item => `
+                        <div class="col-md-4 mb-3">
+                            <div class="thumbnail-card h-100">
+                                <h5>${item.title}</h5>
+                                <p class="mb-2">${item.description}</p>
+                                <div class="p-2 bg-light rounded mb-2 text-center">
+                                    <strong>${item.text_overlay}</strong>
+                                </div>
+                                <p class="small text-muted mb-0"><strong>Why it works:</strong> ${item.appeal}</p>
+                            </div>
+                        </div>
+                        `).join('');
+                        
+                        document.getElementById('thumbnailSuggestions').innerHTML = thumbnailsHTML;
+                    } else {
+                        document.getElementById('thumbnailSuggestions').innerHTML = '<p class="text-muted">No thumbnail suggestions available.</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('thumbnailLoader').style.display = 'none';
+                    document.getElementById('thumbnailSuggestions').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                });
+            });
+            
+            // Generate Voice Preview
+            document.getElementById('generateVoiceover').addEventListener('click', function() {
+                if (!currentScript) return;
+                
+                // Get the first 1000 characters of the script for preview
+                let previewText = currentScript.replace(/\[.*?\]/g, '').substring(0, 1000);
+                
+                // Show audio player container
+                document.getElementById('audioPlayerContainer').style.display = 'block';
+                
+                // Get selected voice
+                const voice = document.getElementById('voiceSelect').value;
+                
+                generateVoicePreview(previewText, voice);
+            });
+            
+            // Voice selection change
+            document.getElementById('voiceSelect').addEventListener('change', function() {
+                if (document.getElementById('audioPlayerContainer').style.display === 'block') {
+                    // Get the first 1000 characters of the script for preview
+                    let previewText = currentScript.replace(/\[.*?\]/g, '').substring(0, 1000);
+                    generateVoicePreview(previewText, this.value);
+                }
+            });
+            
+            function generateVoicePreview(text, voice) {
+                // Set audio player to loading state
+                const audioPlayer = document.getElementById('audioPlayer');
+                audioPlayer.src = '';
+                audioPlayer.style.opacity = '0.5';
+                
+                // Send request to generate speech
+                fetch('/generate-speech', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        text: text,
+                        voice: voice
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.audio_data) {
+                        // Create audio blob and set as source
+                        const audioSrc = `data:audio/mp3;base64,${data.audio_data}`;
+                        audioPlayer.src = audioSrc;
+                        audioPlayer.style.opacity = '1';
+                    } else if (data.error) {
+                        alert('Error generating voice preview: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                    audioPlayer.style.opacity = '1';
+                });
+            }
+            
+            // Export as PDF
+            document.getElementById('exportPDF').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!currentScript) return;
+                
+                exportScript('pdf');
+            });
+            
+            // Export as DOCX
+            document.getElementById('exportDOCX').addEventListener('click', function(e) {
+                e.preventDefault();
+                if (!currentScript) return;
+                
+                exportScript('docx');
+            });
+            
+            function exportScript(format) {
+                const endpoint = format === 'pdf' ? '/export-pdf' : '/export-docx';
+                
+                fetch(endpoint, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        script: currentScript,
+                        title: currentTopic
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success && data.file_data) {
+                        // Create download link
+                        const link = document.createElement('a');
+                        link.href = `data:application/${format === 'pdf' ? 'pdf' : 'vnd.openxmlformats-officedocument.wordprocessingml.document'};base64,${data.file_data}`;
+                        link.download = data.filename;
+                        document.body.appendChild(link);
+                        link.click();
+                        document.body.removeChild(link);
+                    } else if (data.error) {
+                        alert('Error exporting script: ' + data.error);
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                });
+            }
+            
+            // SEO Optimizer Form Submission
+            document.getElementById('seoForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                
+                // Show loader
+                document.getElementById('seoLoader').style.display = 'block';
+                document.getElementById('seoOutput').textContent = 'Optimizing your content...';
+                document.getElementById('copySEO').disabled = true;
+                
+                // Hide SEO analysis panel
+                document.getElementById('seoAnalysisPanel').style.display = 'none';
+                
+                // Get form values
+                const content = document.getElementById('content').value;
+                const keywords = document.getElementById('seoKeywords').value;
+                
+                // Prepare request data
+                const requestData = {
+                    content: content,
+                    keywords: keywords
+                };
+                
+                // Send POST request to backend
+                fetch('/optimize-seo', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData),
+                })
+                .then(response => {
+                    if (!response.ok) {
+                        throw new Error('Network response was not ok');
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    // Hide loader
+                    document.getElementById('seoLoader').style.display = 'none';
+                    
+                    // Display the result
+                    if (data.optimized_content) {
+                        document.getElementById('seoOutput').textContent = data.optimized_content;
+                        document.getElementById('copySEO').disabled = false;
+                    } else if (data.error) {
+                        document.getElementById('seoOutput').textContent = 'Error: ' + data.error;
+                    }
+                })
+                .catch(error => {
+                    // Hide loader
+                    document.getElementById('seoLoader').style.display = 'none';
+                    document.getElementById('seoOutput').textContent = 'Error: ' + error.message;
+                });
+            });
+            
+            // Analyze SEO Score
+            document.getElementById('analyzeSEO').addEventListener('click', function() {
+                const content = document.getElementById('content').value;
+                if (!content) {
+                    alert('Please enter content to analyze');
+                    return;
+                }
+                
+                const keywords = document.getElementById('seoKeywords').value;
+                
+                // Show SEO analysis panel and loader
+                document.getElementById('seoAnalysisPanel').style.display = 'block';
+                document.getElementById('seoAnalysisLoader').style.display = 'block';
+                document.getElementById('seoAnalysisContent').innerHTML = '';
+                
+                // Send request to analyze SEO
+                fetch('/seo-analysis', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ 
+                        content: content,
+                        keywords: keywords
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    // Hide loader
+                    document.getElementById('seoAnalysisLoader').style.display = 'none';
+                    
+                    if (data.score !== undefined) {
+                        // Create SEO analysis content
+                        let analysisHTML = `
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <h5 class="card-title">Overall SEO Score</h5>
+                                        <div class="display-1 mb-0">${data.score}</div>
+                                        <p class="text-muted">out of 100</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-8 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">Analysis</h5>
+                                        <p><strong>Keyword Usage:</strong> ${data.keyword_analysis || 'Not available'}</p>
+                                        <p><strong>Content Structure:</strong> ${data.structure_analysis || 'Not available'}</p>
+                                        <p class="mb-0"><strong>Readability:</strong> ${data.readability_score || 'N/A'}/100</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="card mt-3">
+                            <div class="card-header">
+                                <h5 class="mb-0">Recommendations</h5>
+                            </div>
+                            <div class="card-body">
+                                <ul class="mb-0">
+                        `;
+                        
+                        // Add recommendations
+                        if (Array.isArray(data.recommendations) && data.recommendations.length > 0) {
+                            data.recommendations.forEach(rec => {
+                                analysisHTML += `<li>${rec}</li>`;
+                            });
+                        } else {
+                            analysisHTML += `<li>No specific recommendations available.</li>`;
+                        }
+                        
+                        analysisHTML += `
+                                </ul>
+                            </div>
+                        </div>
+                        `;
+                        
+                        document.getElementById('seoAnalysisContent').innerHTML = analysisHTML;
+                    } else {
+                        document.getElementById('seoAnalysisContent').innerHTML = '<p class="text-muted">No analysis data available.</p>';
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('seoAnalysisLoader').style.display = 'none';
+                    document.getElementById('seoAnalysisContent').innerHTML = `<div class="alert alert-danger">Error: ${error.message}</div>`;
+                });
+            });
+            
+            // Copy script button functionality
+            document.getElementById('copyScript').addEventListener('click', function() {
+                copyToClipboard('scriptOutput');
+            });
+            
+            // Copy SEO content button functionality
+            document.getElementById('copySEO').addEventListener('click', function() {
+                copyToClipboard('seoOutput');
+            });
+            
+            // Copy to clipboard function
+            function copyToClipboard(elementId) {
+                const text = document.getElementById(elementId).textContent;
+                navigator.clipboard.writeText(text).then(
+                    function() {
+                        // Alert the user that the text was copied
+                        const button = document.getElementById(elementId === 'scriptOutput' ? 'copyScript' : 'copySEO');
+                        const originalText = button.textContent;
+                        button.textContent = 'Copied!';
+                        setTimeout(function() {
+                            button.textContent = originalText;
+                        }, 2000);
+                    }
+                ).catch(
+                    function(err) {
+                        console.error('Could not copy text: ', err);
+                    }
+                );
+            }
+        });
+    </script>
+</body>
+</html>
