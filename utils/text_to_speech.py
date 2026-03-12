@@ -85,3 +85,4 @@ def extract_speech_sections(script, max_length=4000):
         sections.append(current_section.strip())
 
     return sections
+# TTS util
