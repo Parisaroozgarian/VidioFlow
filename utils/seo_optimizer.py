@@ -128,3 +128,4 @@ Return a JSON object with:
         return json.loads(response.choices[0].message.content)
     except Exception as e:
         raise Exception(f"Error generating meta tags: {str(e)}")
+# SEO optimizer
