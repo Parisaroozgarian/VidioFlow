@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VidioFlow — Video Script Generator</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg:       #07070d;
+            --surface:  #0f0f1a;
+            --surface2: #151525;
+            --border:   rgba(255,255,255,0.07);
+            --accent:   #4ef0c4;
+            --accent2:  #7b6cff;
+            --text:     #e8e8f0;
+            --muted:    #5a5a78;
+            --radius:   14px;
+            --font-head: 'Syne', sans-serif;
+            --font-body: 'DM Sans', sans-serif;
+        }
+
+        html { scroll-behavior: smooth; }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            font-family: var(--font-body);
+            font-size: 15px;
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        body::before {
+            content: '';
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+            opacity: 0.35;
+        }
+
+        .blob { position: fixed; border-radius: 50%; filter: blur(120px); pointer-events: none; z-index: 0; }
+        .blob-1 { width: 500px; height: 500px; background: rgba(78,240,196,0.07); top: -150px; right: -100px; }
+        .blob-2 { width: 400px; height: 400px; background: rgba(123,108,255,0.06); bottom: -100px; left: -80px; }
+
+        #app { position: relative; z-index: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+        /* Navbar */
+        nav {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 18px 40px;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            background: rgba(7,7,13,0.7);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .brand {
+            font-family: var(--font-head); font-size: 22px; font-weight: 800;
+            letter-spacing: -0.5px; color: var(--text);
+            display: flex; align-items: center; gap: 10px; text-decoration: none;
+        }
+        .brand-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: var(--accent); box-shadow: 0 0 12px var(--accent);
+            animation: pulse 2.5s ease-in-out infinite;
+        }
+        @keyframes pulse {
+            0%,100% { box-shadow: 0 0 10px var(--accent); }
+            50% { box-shadow: 0 0 22px var(--accent), 0 0 40px rgba(78,240,196,0.3); }
+        }
+        .nav-tabs-custom {
+            display: flex; gap: 4px; background: var(--surface2);
+            border: 1px solid var(--border); border-radius: 10px; padding: 4px;
+        }
+        .nav-tab {
+            padding: 8px 20px; border-radius: 7px; font-family: var(--font-body);
+            font-size: 13.5px; font-weight: 500; color: var(--muted); cursor: pointer;
+            border: none; background: transparent; transition: all 0.2s; letter-spacing: 0.01em;
+        }
+        .nav-tab:hover { color: var(--text); }
+        .nav-tab.active { background: var(--surface); color: var(--accent); box-shadow: 0 1px 8px rgba(0,0,0,0.4); }
+
+        /* Layout */
+        .main { flex: 1; padding: 36px 40px; }
+        .tab-pane { display: none; animation: fadeUp 0.35s ease both; }
+        .tab-pane.active { display: block; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+        .grid-2 { display: grid; grid-template-columns: 340px 1fr; gap: 24px; align-items: start; }
+        .grid-2-equal { display: grid; grid-template-columns: 1fr 1.4fr; gap: 24px; align-items: start; }
+
+        /* Cards */
+        .card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); overflow: hidden; margin-bottom: 20px;
+            transition: border-color 0.2s;
+        }
+        .card:hover { border-color: rgba(255,255,255,0.12); }
+        .card-header {
+            padding: 18px 22px 16px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        }
+        .card-title { font-family: var(--font-head); font-size: 15px; font-weight: 700; letter-spacing: -0.2px; color: var(--text); }
+        .card-body { padding: 22px; }
+
+        .section-label {
+            font-family: var(--font-head); font-size: 11px; font-weight: 700;
+            letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+            margin-bottom: 18px; display: flex; align-items: center; gap: 8px;
+        }
+        .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+        /* Forms */
+        .form-group { margin-bottom: 18px; }
+        label { display: block; font-size: 12.5px; font-weight: 500; color: var(--muted); margin-bottom: 7px; letter-spacing: 0.02em; }
+        input[type="text"], textarea, select {
+            width: 100%; background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 9px; padding: 10px 14px; color: var(--text);
+            font-family: var(--font-body); font-size: 14px; outline: none;
+            transition: border-color 0.2s, box-shadow 0.2s; appearance: none; -webkit-appearance: none;
+        }
+        input[type="text"]:focus, textarea:focus, select:focus {
+            border-color: var(--accent); box-shadow: 0 0 0 3px rgba(78,240,196,0.1);
+        }
+        input::placeholder, textarea::placeholder { color: var(--muted); }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%235a5a78' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px;
+        }
+        select option { background: #1a1a2e; }
+        textarea { resize: vertical; min-height: 140px; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+        .check-group { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .check-group input[type="checkbox"] {
+            width: 18px; height: 18px; border: 1.5px solid var(--border);
+            border-radius: 5px; background: var(--surface2); accent-color: var(--accent); cursor: pointer;
+        }
+        .check-group label { margin: 0; cursor: pointer; font-size: 13.5px; color: var(--text); }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 10px 18px; border-radius: 9px; font-family: var(--font-body);
+            font-size: 13.5px; font-weight: 500; cursor: pointer; border: none;
+            transition: all 0.2s; text-decoration: none; white-space: nowrap;
+        }
+        .btn:disabled { opacity: 0.38; cursor: not-allowed; }
+        .btn-primary {
+            background: var(--accent); color: #07070d; font-weight: 600;
+            box-shadow: 0 0 20px rgba(78,240,196,0.2);
+        }
+        .btn-primary:hover:not(:disabled) { background: #6ff5d0; box-shadow: 0 0 30px rgba(78,240,196,0.35); transform: translateY(-1px); }
+        .btn-ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); }
+        .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: rgba(255,255,255,0.2); background: var(--surface2); }
+        .btn-accent2 { background: rgba(123,108,255,0.15); color: #a89fff; border: 1px solid rgba(123,108,255,0.25); }
+        .btn-accent2:hover:not(:disabled) { background: rgba(123,108,255,0.25); }
+        .btn-full { width: 100%; }
+        .btn-sm { padding: 7px 13px; font-size: 12.5px; border-radius: 7px; }
+
+        /* Toolbar */
+        .toolbar {
+            display: none; align-items: center; gap: 8px; padding: 12px 18px;
+            border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.2); flex-wrap: wrap;
+        }
+        .toolbar.visible { display: flex; }
+        .toolbar-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-right: 4px; }
+
+        /* Dropdown */
+        .dropdown { position: relative; display: inline-block; }
+        .dropdown-menu {
+            display: none; position: absolute; top: calc(100% + 6px); right: 0;
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: 10px; padding: 6px; min-width: 180px; z-index: 200;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+        .dropdown-menu.open { display: block; animation: dropIn 0.15s ease both; }
+        @keyframes dropIn { from { opacity:0; transform:translateY(-6px); } to { opacity:1; transform:translateY(0); } }
+        .dropdown-item {
+            display: flex; align-items: center; gap: 9px; padding: 9px 12px;
+            border-radius: 7px; font-size: 13.5px; color: var(--text); cursor: pointer; transition: background 0.15s;
+        }
+        .dropdown-item:hover { background: var(--surface); color: var(--accent); }
+
+        /* Output */
+        .output-area {
+            background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+            padding: 18px; min-height: 220px; font-size: 14px; line-height: 1.75;
+            color: var(--text); white-space: pre-line; font-family: var(--font-body);
+        }
+        .output-placeholder { color: var(--muted); font-style: italic; }
+
+        /* Loader */
+        .loader-wrap { display: none; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 14px; }
+        .loader-wrap.visible { display: flex; }
+        .loader-ring { width: 36px; height: 36px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .loader-text { font-size: 12.5px; color: var(--muted); letter-spacing: 0.04em; }
+
+        /* Metrics */
+        .metric-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+        .metric-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px; border-left: 3px solid var(--accent); }
+        .metric-label { font-size: 11.5px; color: var(--muted); font-weight: 500; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.06em; }
+        .metric-value { font-family: var(--font-head); font-size: 28px; font-weight: 800; color: var(--text); line-height: 1; margin-bottom: 4px; }
+        .metric-value small { font-size: 13px; font-weight: 400; color: var(--muted); }
+        .metric-sub { font-size: 12.5px; color: var(--muted); }
+
+        /* B-roll */
+        .broll-item {
+            padding: 14px 16px; border-radius: 10px; background: var(--surface2);
+            border: 1px solid var(--border); border-left: 3px solid var(--accent2);
+            margin-bottom: 12px; transition: border-color 0.2s;
+        }
+        .broll-item:hover { border-color: rgba(123,108,255,0.5); }
+        .broll-item h5 { font-family: var(--font-head); font-size: 13.5px; font-weight: 700; margin-bottom: 6px; }
+        .broll-meta { display: flex; gap: 16px; font-size: 12.5px; color: var(--muted); flex-wrap: wrap; }
+        .broll-meta strong { color: var(--text); }
+
+        /* Thumbnails */
+        .thumbnail-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        .thumb-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; overflow: hidden; transition: transform 0.2s, border-color 0.2s; }
+        .thumb-card:hover { transform: translateY(-3px); border-color: rgba(255,255,255,0.15); }
+        .thumb-preview { height: 90px; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg,#0f0f1a,#1a1a35); border-bottom: 1px solid var(--border); font-family: var(--font-head); font-size: 13px; font-weight: 800; text-align: center; padding: 12px; color: var(--accent); letter-spacing: -0.2px; }
+        .thumb-body { padding: 12px; }
+        .thumb-title { font-family: var(--font-head); font-size: 13px; font-weight: 700; margin-bottom: 6px; }
+        .thumb-desc { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 8px; }
+        .thumb-appeal { font-size: 11.5px; color: #7b6cff; }
+
+        /* Versions */
+        .version-item { padding: 12px 14px; border-radius: 9px; background: var(--surface2); border: 1px solid var(--border); margin-bottom: 9px; cursor: pointer; transition: all 0.2s; }
+        .version-item:hover { border-color: var(--accent); background: rgba(78,240,196,0.05); }
+        .version-num { font-family: var(--font-head); font-size: 13px; font-weight: 700; margin-bottom: 3px; }
+        .version-time { font-size: 11.5px; color: var(--muted); margin-bottom: 6px; }
+        .version-tags { display: flex; gap: 5px; flex-wrap: wrap; }
+        .tag { font-size: 11px; padding: 3px 8px; border-radius: 5px; background: rgba(255,255,255,0.06); color: var(--muted); border: 1px solid var(--border); }
+
+        /* Audio */
+        .audio-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-top: 14px; }
+        .audio-box h5 { font-family: var(--font-head); font-size: 13.5px; font-weight: 700; margin-bottom: 12px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+        .audio-controls { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+        audio { width: 100%; height: 36px; accent-color: var(--accent); }
+
+        /* SEO score */
+        .score-wrap { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px; }
+        .score-num { font-family: var(--font-head); font-size: 52px; font-weight: 800; color: var(--accent); line-height: 1; }
+        .score-label { font-size: 12px; color: var(--muted); margin-top: 4px; text-transform: uppercase; letter-spacing: 0.1em; }
+        .recs-list { list-style: none; padding: 0; }
+        .recs-list li { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 13.5px; }
+        .recs-list li:last-child { border-bottom: none; }
+        .recs-list li::before { content: '→'; color: var(--accent); font-weight: 700; margin-top: 1px; flex-shrink: 0; }
+
+        .alert-error { background: rgba(255,95,109,0.1); border: 1px solid rgba(255,95,109,0.25); color: #ff8a94; padding: 12px 16px; border-radius: 9px; font-size: 13.5px; }
+
+        footer { text-align: center; padding: 24px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--muted); }
+        footer span { color: var(--accent); }
+
+        @media (max-width: 960px) {
+            .grid-2, .grid-2-equal { grid-template-columns: 1fr; }
+            .thumbnail-grid { grid-template-columns: 1fr 1fr; }
+            nav { padding: 14px 20px; } .main { padding: 24px 20px; }
+        }
+        @media (max-width: 600px) {
+            .thumbnail-grid { grid-template-columns: 1fr; }
+            .metric-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+<div id="app">
+
+    <nav>
+        <a class="brand" href="#">
+            <div class="brand-dot"></div>VidioFlow
+        </a>
+        <div class="nav-tabs-custom">
+            <button class="nav-tab active" data-tab="scriptGenerator"><i class="bi bi-camera-video"></i> Script Generator</button>
+            <button class="nav-tab" data-tab="seoOptimizer"><i class="bi bi-graph-up"></i> SEO Optimizer</button>
+        </div>
+    </nav>
+
+    <div class="main">
+
+        <!-- SCRIPT GENERATOR -->
+        <div class="tab-pane active" id="scriptGenerator">
+            <div class="grid-2">
+                <div>
+                    <div class="card">
+                        <div class="card-header"><span class="card-title">Generate Script</span></div>
+                        <div class="card-body">
+                            <form id="scriptForm">
+                                <div class="form-group">
+                                    <label>Video Topic</label>
+                                    <input type="text" id="topic" placeholder="e.g., Benefits of Regular Exercise" required>
+                                </div>
+                                <div class="form-group">
+                                    <label>Template</label>
+                                    <select id="templateId"><option value="">General — No Template</option></select>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Duration</label>
+                                        <select id="duration">
+                                            <option value="1">1 min</option>
+                                            <option value="3" selected>3 min</option>
+                                            <option value="5">5 min</option>
+                                            <option value="10">10 min</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Tone</label>
+                                        <select id="tone">
+                                            <option value="informative" selected>Informative</option>
+                                            <option value="entertaining">Entertaining</option>
+                                            <option value="professional">Professional</option>
+                                            <option value="casual">Casual</option>
+                                            <option value="inspirational">Inspirational</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="form-group">
+                                        <label>Audience</label>
+                                        <select id="targetAudience">
+                                            <option value="general" selected>General</option>
+                                            <option value="beginners">Beginners</option>
+                                            <option value="experts">Experts</option>
+                                            <option value="children">Children</option>
+                                            <option value="professionals">Professionals</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label>Language</label>
+                                        <select id="language">
+                                            <option value="english" selected>English</option>
+                                            <option value="spanish">Spanish</option>
+                                            <option value="french">French</option>
+                                            <option value="german">German</option>
+                                            <option value="italian">Italian</option>
+                                            <option value="portuguese">Portuguese</option>
+                                            <option value="japanese">Japanese</option>
+                                            <option value="chinese">Chinese</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <div class="check-group">
+                                        <input type="checkbox" id="optimizeForSEO">
+                                        <label for="optimizeForSEO">Optimise for SEO</label>
+                                    </div>
+                                </div>
+                                <div class="form-group" id="keywordsContainer" style="display:none;">
+                                    <label>Keywords <span style="color:var(--muted);font-size:11.5px;">(comma-separated)</span></label>
+                                    <input type="text" id="keywords" placeholder="e.g., exercise, fitness, health">
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-full"><i class="bi bi-magic"></i> Generate Script</button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card" id="versionsPanel" style="display:none;">
+                        <div class="card-header"><span class="card-title">Script Versions</span></div>
+                        <div class="card-body">
+                            <div class="loader-wrap" id="versionsLoader"><div class="loader-ring"></div><div class="loader-text">Loading…</div></div>
+                            <div id="versionsList"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Generated Script</span>
+                            <div style="display:flex;gap:8px;align-items:center;">
+                                <button id="copyScript" class="btn btn-ghost btn-sm" disabled><i class="bi bi-clipboard"></i> Copy</button>
+                                <div class="dropdown">
+                                    <button id="exportDropdown" class="btn btn-ghost btn-sm" disabled onclick="toggleDropdown(event)">
+                                        <i class="bi bi-download"></i> Export <i class="bi bi-chevron-down" style="font-size:10px;"></i>
+                                    </button>
+                                    <div class="dropdown-menu" id="exportMenu">
+                                        <div class="dropdown-item" id="exportPDF"><i class="bi bi-file-earmark-pdf"></i> Export as PDF</div>
+                                        <div class="dropdown-item" id="exportDOCX"><i class="bi bi-file-earmark-word"></i> Export as Word</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="toolbar" id="scriptTools">
+                            <span class="toolbar-label">Tools</span>
+                            <button class="btn btn-ghost btn-sm" id="analyzeScript"><i class="bi bi-bar-chart-line"></i> Analyze</button>
+                            <button class="btn btn-ghost btn-sm" id="generateBRoll"><i class="bi bi-camera-video"></i> B-Roll</button>
+                            <button class="btn btn-ghost btn-sm" id="generateThumbnails"><i class="bi bi-image"></i> Thumbnails</button>
+                            <button class="btn btn-ghost btn-sm" id="generateVoiceover"><i class="bi bi-mic"></i> Voice Preview</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="loader-wrap" id="scriptLoader"><div class="loader-ring"></div><div class="loader-text">Crafting your script…</div></div>
+                            <div class="output-area" id="scriptOutput"><span class="output-placeholder">Your generated script will appear here.</span></div>
+                            <div class="audio-box" id="audioPlayerContainer" style="display:none;">
+                                <h5><i class="bi bi-headphones" style="color:var(--accent);"></i> Voice Preview</h5>
+                                <div class="audio-controls">
+                                    <label style="margin:0;white-space:nowrap;">Voice</label>
+                                    <select id="voiceSelect" style="max-width:200px;">
+                                        <option value="alloy">Alloy — Neutral</option>
+                                        <option value="echo">Echo — Male</option>
+                                        <option value="fable">Fable — Female</option>
+                                        <option value="onyx">Onyx — Deep Male</option>
+                                        <option value="nova">Nova — Female</option>
+                                        <option value="shimmer">Shimmer — Young Female</option>
+                                    </select>
+                                </div>
+                                <audio id="audioPlayer" controls></audio>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="analyticsPanel" style="display:none;">
+                        <div class="card-header"><span class="card-title"><i class="bi bi-bar-chart-line" style="color:var(--accent);margin-right:7px;"></i>Script Analytics</span></div>
+                        <div class="card-body">
+                            <div class="loader-wrap" id="analyticsLoader"><div class="loader-ring"></div><div class="loader-text">Analyzing…</div></div>
+                            <div class="metric-grid" id="analyticsContent"></div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="brollPanel" style="display:none;">
+                        <div class="card-header"><span class="card-title"><i class="bi bi-camera-video" style="color:var(--accent2);margin-right:7px;"></i>B-Roll Suggestions</span></div>
+                        <div class="card-body">
+                            <div class="loader-wrap" id="brollLoader"><div class="loader-ring"></div><div class="loader-text">Generating ideas…</div></div>
+                            <div id="brollSuggestions"></div>
+                        </div>
+                    </div>
+
+                    <div class="card" id="thumbnailPanel" style="display:none;">
+                        <div class="card-header"><span class="card-title"><i class="bi bi-image" style="color:var(--accent);margin-right:7px;"></i>Thumbnail Ideas</span></div>
+                        <div class="card-body">
+                            <div class="loader-wrap" id="thumbnailLoader"><div class="loader-ring"></div><div class="loader-text">Designing concepts…</div></div>
+                            <div class="thumbnail-grid" id="thumbnailSuggestions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEO OPTIMIZER -->
+        <div class="tab-pane" id="seoOptimizer">
+            <div class="grid-2-equal">
+                <div class="card">
+                    <div class="card-header"><span class="card-title">SEO Content Optimizer</span></div>
+                    <div class="card-body">
+                        <form id="seoForm">
+                            <div class="form-group">
+                                <label>Content to Optimize</label>
+                                <textarea id="content" placeholder="Paste your content here…" required></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label>Target Keywords <span style="color:var(--muted);font-size:11.5px;">(comma-separated)</span></label>
+                                <input type="text" id="seoKeywords" placeholder="e.g., meditation, mindfulness, stress relief">
+                            </div>
+                            <div style="display:flex;flex-direction:column;gap:10px;">
+                                <button type="submit" class="btn btn-primary btn-full"><i class="bi bi-stars"></i> Optimize Content</button>
+                                <button type="button" id="analyzeSEO" class="btn btn-accent2 btn-full"><i class="bi bi-graph-up-arrow"></i> Analyze SEO Score</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+                <div>
+                    <div class="card">
+                        <div class="card-header">
+                            <span class="card-title">Optimized Content</span>
+                            <button id="copySEO" class="btn btn-ghost btn-sm" disabled><i class="bi bi-clipboard"></i> Copy</button>
+                        </div>
+                        <div class="card-body">
+                            <div class="loader-wrap" id="seoLoader"><div class="loader-ring"></div><div class="loader-text">Optimizing…</div></div>
+                            <div class="output-area" id="seoOutput"><span class="output-placeholder">Optimized content will appear here.</span></div>
+                        </div>
+                    </div>
+                    <div class="card" id="seoAnalysisPanel" style="display:none;">
+                        <div class="card-header"><span class="card-title"><i class="bi bi-speedometer2" style="color:var(--accent);margin-right:7px;"></i>SEO Analysis</span></div>
+                        <div class="card-body">
+                            <div class="loader-wrap" id="seoAnalysisLoader"><div class="loader-ring"></div><div class="loader-text">Scoring…</div></div>
+                            <div id="seoAnalysisContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer>© 2025 <span>VidioFlow</span> — Video Script Generator & SEO Optimizer</footer>
+</div>
+
+<script>
+document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById(this.dataset.tab).classList.add('active');
+    });
+});
+
+function toggleDropdown(e) {
+    e.stopPropagation();
+    document.getElementById('exportMenu').classList.toggle('open');
+}
+document.addEventListener('click', () => document.getElementById('exportMenu').classList.remove('open'));
+
+function showLoader(id) { document.getElementById(id).classList.add('visible'); }
+function hideLoader(id) { document.getElementById(id).classList.remove('visible'); }
+
+let currentScript = '', currentTopic = '', currentScriptId = null;
+
+const FALLBACK_TEMPLATES = {
+    tutorial: 'Tutorial / How-To',
+    review: 'Product/Service Review',
+    explainer: 'Explainer / Educational',
+    storytelling: 'Storytelling / Narrative',
+    vlog: 'Vlog / Day-in-the-Life'
+};
+
+fetch('/api/templates')
+    .then(r => {
+        if (!r.ok) throw new Error('Status ' + r.status);
+        return r.json();
+    })
+    .then(templates => {
+        const sel = document.getElementById('templateId');
+        for (const [id, name] of Object.entries(templates)) {
+            const opt = document.createElement('option');
+            opt.value = id; opt.textContent = name; sel.appendChild(opt);
+        }
+    })
+    .catch(() => {
+        const sel = document.getElementById('templateId');
+        for (const [id, name] of Object.entries(FALLBACK_TEMPLATES)) {
+            const opt = document.createElement('option');
+            opt.value = id; opt.textContent = name; sel.appendChild(opt);
+        }
+    });
+
+document.getElementById('optimizeForSEO').addEventListener('change', function() {
+    document.getElementById('keywordsContainer').style.display = this.checked ? 'block' : 'none';
+});
+
+document.getElementById('scriptForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showLoader('scriptLoader');
+    document.getElementById('scriptOutput').innerHTML = '';
+    document.getElementById('copyScript').disabled = true;
+    document.getElementById('exportDropdown').disabled = true;
+    document.getElementById('scriptTools').classList.remove('visible');
+    ['analyticsPanel','brollPanel','thumbnailPanel','audioPlayerContainer'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+    currentTopic = document.getElementById('topic').value;
+    fetch('/generate-script', {
+        method: 'POST', headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({
+            topic: currentTopic,
+            duration: parseInt(document.getElementById('duration').value),
+            tone: document.getElementById('tone').value,
+            targetAudience: document.getElementById('targetAudience').value,
+            templateId: document.getElementById('templateId').value || null,
+            language: document.getElementById('language').value,
+            optimizeForSEO: document.getElementById('optimizeForSEO').checked,
+            keywords: document.getElementById('keywords').value
+        })
+    })
+    .then(r => r.json())
+    .then(data => {
+        hideLoader('scriptLoader');
+        if (data.script) {
+            document.getElementById('scriptOutput').textContent = data.script;
+            document.getElementById('copyScript').disabled = false;
+            document.getElementById('exportDropdown').disabled = false;
+            document.getElementById('scriptTools').classList.add('visible');
+            currentScript = data.script; currentScriptId = data.script_id;
+            loadScriptVersions(currentTopic);
+        } else {
+            document.getElementById('scriptOutput').innerHTML = `<div class="alert-error"><i class="bi bi-exclamation-circle"></i> ${data.error || 'Unknown error'}</div>`;
+        }
+    })
+    .catch(err => {
+        hideLoader('scriptLoader');
+        document.getElementById('scriptOutput').innerHTML = `<div class="alert-error"><i class="bi bi-exclamation-circle"></i> ${err.message}</div>`;
+    });
+});
+
+function loadScriptVersions(topic) {
+    if (!topic) return;
+    document.getElementById('versionsPanel').style.display = 'block';
+    showLoader('versionsLoader');
+    document.getElementById('versionsList').innerHTML = '';
+    fetch(`/script-versions?topic=${encodeURIComponent(topic)}`).then(r => r.json()).then(data => {
+        hideLoader('versionsLoader');
+        if (data.versions && data.versions.length > 0) {
+            document.getElementById('versionsList').innerHTML = data.versions.map((v, i) => {
+                const d = new Date(v.timestamp);
+                return `<div class="version-item" data-id="${v.id}">
+                    <div class="version-num">Version ${i + 1}</div>
+                    <div class="version-time">${d.toLocaleDateString()} · ${d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})}</div>
+                    <div class="version-tags"><span class="tag">${v.parameters.tone}</span><span class="tag">${v.parameters.language}</span><span class="tag">${v.parameters.duration}min</span></div>
+                </div>`;
+            }).join('');
+            document.querySelectorAll('.version-item').forEach(el => {
+                el.addEventListener('click', () => loadScriptVersion(el.dataset.id));
+            });
+        } else {
+            document.getElementById('versionsList').innerHTML = '<p style="color:var(--muted);font-size:13px;">No previous versions.</p>';
+        }
+    }).catch(err => { hideLoader('versionsLoader'); document.getElementById('versionsList').innerHTML = `<div class="alert-error">${err.message}</div>`; });
+}
+
+function loadScriptVersion(versionId) {
+    fetch(`/script-version/${versionId}`).then(r => r.json()).then(data => {
+        if (data.script) {
+            document.getElementById('scriptOutput').textContent = data.script;
+            document.getElementById('copyScript').disabled = false;
+            document.getElementById('exportDropdown').disabled = false;
+            document.getElementById('scriptTools').classList.add('visible');
+            currentScript = data.script; currentScriptId = data.id;
+        } else { alert('Error: ' + data.error); }
+    }).catch(err => alert('Error: ' + err.message));
+}
+
+document.getElementById('analyzeScript').addEventListener('click', function() {
+    if (!currentScript) return;
+    document.getElementById('analyticsPanel').style.display = 'block';
+    document.getElementById('brollPanel').style.display = 'none';
+    document.getElementById('thumbnailPanel').style.display = 'none';
+    showLoader('analyticsLoader');
+    document.getElementById('analyticsContent').innerHTML = '';
+    fetch('/analyze-script', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({script:currentScript}) })
+    .then(r => r.json()).then(data => {
+        hideLoader('analyticsLoader');
+        document.getElementById('analyticsContent').innerHTML = `
+            <div class="metric-card"><div class="metric-label">Readability</div><div class="metric-value">${data.readability_score??0}<small>/100</small></div><div class="metric-sub">Complexity: ${data.complexity_level??'N/A'}</div></div>
+            <div class="metric-card"><div class="metric-label">Word Count</div><div class="metric-value">${data.word_count??0}<small> words</small></div><div class="metric-sub">${data.estimated_duration??'N/A'}</div></div>
+            <div class="metric-card"><div class="metric-label">Tone</div><div class="metric-value" style="font-size:16px;font-weight:700;">${data.tone_analysis??'N/A'}</div><div class="metric-sub">Pace: ${data.reading_pace??'N/A'} wpm</div></div>
+            <div class="metric-card"><div class="metric-label">Top Suggestion</div><div class="metric-value" style="font-size:13px;font-weight:500;line-height:1.5;">${data.top_suggestion??'N/A'}</div><div class="metric-sub">${data.key_strength??''}</div></div>`;
+    }).catch(err => { hideLoader('analyticsLoader'); document.getElementById('analyticsContent').innerHTML = `<div class="alert-error">${err.message}</div>`; });
+});
+
+document.getElementById('generateBRoll').addEventListener('click', function() {
+    if (!currentScript) return;
+    document.getElementById('brollPanel').style.display = 'block';
+    document.getElementById('analyticsPanel').style.display = 'none';
+    document.getElementById('thumbnailPanel').style.display = 'none';
+    showLoader('brollLoader'); document.getElementById('brollSuggestions').innerHTML = '';
+    fetch('/generate-b-roll', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({script:currentScript}) })
+    .then(r => r.json()).then(data => {
+        hideLoader('brollLoader');
+        const list = Array.isArray(data) ? data : [];
+        document.getElementById('brollSuggestions').innerHTML = list.length
+            ? list.map(item => `<div class="broll-item"><h5>${item.description??''}</h5><div class="broll-meta"><span><strong>Timing </strong>${item.timing??''}</span><span><strong>Purpose </strong>${item.purpose??''}</span></div></div>`).join('')
+            : '<p style="color:var(--muted);font-size:13px;">No B-Roll suggestions available.</p>';
+    }).catch(err => { hideLoader('brollLoader'); document.getElementById('brollSuggestions').innerHTML = `<div class="alert-error">${err.message}</div>`; });
+});
+
+document.getElementById('generateThumbnails').addEventListener('click', function() {
+    if (!currentScript||!currentTopic) return;
+    document.getElementById('thumbnailPanel').style.display = 'block';
+    document.getElementById('analyticsPanel').style.display = 'none';
+    document.getElementById('brollPanel').style.display = 'none';
+    showLoader('thumbnailLoader'); document.getElementById('thumbnailSuggestions').innerHTML = '';
+    fetch('/generate-thumbnails', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({topic:currentTopic,script:currentScript}) })
+    .then(r => r.json()).then(data => {
+        hideLoader('thumbnailLoader');
+        const list = Array.isArray(data) ? data : [];
+        document.getElementById('thumbnailSuggestions').innerHTML = list.length
+            ? list.map(item => `<div class="thumb-card"><div class="thumb-preview">${item.text_overlay??''}</div><div class="thumb-body"><div class="thumb-title">${item.title??''}</div><div class="thumb-desc">${item.description??''}</div><div class="thumb-appeal"><i class="bi bi-lightning-charge-fill"></i> ${item.appeal??''}</div></div></div>`).join('')
+            : '<p style="color:var(--muted);font-size:13px;">No thumbnail suggestions available.</p>';
+    }).catch(err => { hideLoader('thumbnailLoader'); document.getElementById('thumbnailSuggestions').innerHTML = `<div class="alert-error">${err.message}</div>`; });
+});
+
+document.getElementById('generateVoiceover').addEventListener('click', function() {
+    if (!currentScript) return;
+    document.getElementById('audioPlayerContainer').style.display = 'block';
+    generateVoicePreview(currentScript.replace(/\[.*?\]/g,'').substring(0,1000), document.getElementById('voiceSelect').value);
+});
+document.getElementById('voiceSelect').addEventListener('change', function() {
+    if (document.getElementById('audioPlayerContainer').style.display==='block')
+        generateVoicePreview(currentScript.replace(/\[.*?\]/g,'').substring(0,1000), this.value);
+});
+function generateVoicePreview(text, voice) {
+    const ap = document.getElementById('audioPlayer');
+    ap.src = ''; ap.style.opacity = '0.4';
+    fetch('/generate-speech', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({text,voice}) })
+    .then(r => r.json()).then(data => {
+        if (data.success&&data.audio_data) { ap.src=`data:audio/mp3;base64,${data.audio_data}`; ap.style.opacity='1'; }
+        else alert('Voice error: '+(data.error||'Unknown'));
+    }).catch(err => { alert('Error: '+err.message); ap.style.opacity='1'; });
+}
+
+document.getElementById('exportPDF').addEventListener('click', () => exportScript('pdf'));
+document.getElementById('exportDOCX').addEventListener('click', () => exportScript('docx'));
+function exportScript(format) {
+    document.getElementById('exportMenu').classList.remove('open');
+    fetch(format==='pdf'?'/export-pdf':'/export-docx', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({script:currentScript,title:currentTopic}) })
+    .then(r => r.json()).then(data => {
+        if (data.success&&data.file_data) {
+            const a = document.createElement('a');
+            a.href=`data:application/${format==='pdf'?'pdf':'vnd.openxmlformats-officedocument.wordprocessingml.document'};base64,${data.file_data}`;
+            a.download=data.filename; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        } else alert('Export error: '+(data.error||'Unknown'));
+    }).catch(err => alert('Error: '+err.message));
+}
+
+document.getElementById('seoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    showLoader('seoLoader'); document.getElementById('seoOutput').innerHTML = '';
+    document.getElementById('copySEO').disabled = true;
+    document.getElementById('seoAnalysisPanel').style.display = 'none';
+    fetch('/optimize-seo', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content:document.getElementById('content').value,keywords:document.getElementById('seoKeywords').value}) })
+    .then(r => r.json()).then(data => {
+        hideLoader('seoLoader');
+        if (data.optimized_content) { document.getElementById('seoOutput').textContent=data.optimized_content; document.getElementById('copySEO').disabled=false; }
+        else document.getElementById('seoOutput').innerHTML=`<div class="alert-error">${data.error||'Unknown error'}</div>`;
+    }).catch(err => { hideLoader('seoLoader'); document.getElementById('seoOutput').innerHTML=`<div class="alert-error">${err.message}</div>`; });
+});
+
+document.getElementById('analyzeSEO').addEventListener('click', function() {
+    const content = document.getElementById('content').value;
+    if (!content) { alert('Please enter content to analyze'); return; }
+    document.getElementById('seoAnalysisPanel').style.display = 'block';
+    showLoader('seoAnalysisLoader'); document.getElementById('seoAnalysisContent').innerHTML = '';
+    fetch('/seo-analysis', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({content,keywords:document.getElementById('seoKeywords').value}) })
+    .then(r => r.json()).then(data => {
+        hideLoader('seoAnalysisLoader');
+        if (data.score!==undefined) {
+            const recs = (data.recommendations||['No recommendations.']).map(r=>`<li>${r}</li>`).join('');
+            document.getElementById('seoAnalysisContent').innerHTML=`
+                <div style="display:grid;grid-template-columns:140px 1fr;gap:16px;margin-bottom:16px;">
+                    <div class="score-wrap" style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;"><div class="score-num">${data.score}</div><div class="score-label">SEO Score</div></div>
+                    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+                        <p style="font-size:13px;margin-bottom:8px;"><strong style="color:var(--text);">Keywords</strong><br><span style="color:var(--muted);">${data.keyword_analysis??'N/A'}</span></p>
+                        <p style="font-size:13px;margin-bottom:8px;"><strong style="color:var(--text);">Structure</strong><br><span style="color:var(--muted);">${data.structure_analysis??'N/A'}</span></p>
+                        <p style="font-size:13px;margin:0;"><strong style="color:var(--text);">Readability</strong> <span style="color:var(--accent);">${data.readability_score??'N/A'}/100</span></p>
+                    </div>
+                </div>
+                <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px;">
+                    <div class="section-label">Recommendations</div><ul class="recs-list">${recs}</ul>
+                </div>`;
+        } else { document.getElementById('seoAnalysisContent').innerHTML='<p style="color:var(--muted);">No analysis data available.</p>'; }
+    }).catch(err => { hideLoader('seoAnalysisLoader'); document.getElementById('seoAnalysisContent').innerHTML=`<div class="alert-error">${err.message}</div>`; });
+});
+
+document.getElementById('copyScript').addEventListener('click', () => copyText('scriptOutput','copyScript'));
+document.getElementById('copySEO').addEventListener('click', () => copyText('seoOutput','copySEO'));
+function copyText(outputId, btnId) {
+    navigator.clipboard.writeText(document.getElementById(outputId).textContent).then(() => {
+        const btn=document.getElementById(btnId), orig=btn.innerHTML;
+        btn.innerHTML='<i class="bi bi-check-lg"></i> Copied!';
+        setTimeout(()=>btn.innerHTML=orig,2000);
+    });
+}
+</script>
+</body>
+</html>
