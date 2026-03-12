@@ -229,3 +229,4 @@ def speech_endpoint():
 
 if __name__ == '__main__':
     app.run(debug=True)
+# Flask app
