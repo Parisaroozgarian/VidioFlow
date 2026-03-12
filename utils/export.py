@@ -132,3 +132,4 @@ def generate_docx(script_text, title="Video Script"):
     document.save(buffer)
     buffer.seek(0)
     return buffer
+# Export util
