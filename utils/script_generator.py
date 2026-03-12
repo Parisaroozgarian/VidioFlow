@@ -246,3 +246,4 @@ Each object must have these keys:
         return _extract_list(data)
     except Exception as e:
         raise Exception(f"Error generating thumbnail suggestions: {str(e)}")
+# Script generator
